@@ -1,0 +1,25 @@
+# Virtual environment & Python cache
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Large raw datasets (keep demo_cases for testing)
+data/real/*.wav
+data/real/*.flac
+data/fake/*.wav
+data/fake/*.flac
+!data/real/sample_*.wav
+!data/fake/sample_*.wav
+!data/demo_cases/*.wav
+
+# Runtime uploads & temporary files
+static/uploads/*
+static/plots/*.png
+*.db
+*.sqlite3
+.env
+
+# Reference archives & course PDFs/DOCs (optional: keep or ignore when pushing code)
+drive-download-*.zip

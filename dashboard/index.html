@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project 9: Deepfake Vishing Defense SOC Dashboard</title>
+  <style>
+    :root {
+      --navy: #1f3864;
+      --blue: #2e75b6;
+      --green: #2e7d32;
+      --amber: #d97706;
+      --red: #c62828;
+      --bg: #f3f6fb;
+      --card: #ffffff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+    body { background: var(--bg); color: #1e293b; }
+    header {
+      background: linear-gradient(90deg, #16294a, #254b85);
+      color: #fff; padding: 14px 24px;
+      display: flex; justify-content: space-between; align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    header h1 { font-size: 19px; font-weight: 700; }
+    .badge-online { background: #22c55e; color: #fff; padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+    .container { max-width: 1380px; margin: 18px auto; padding: 0 16px; display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+    .card { background: var(--card); border-radius: 10px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+    .card-title { font-size: 14px; font-weight: 700; color: var(--navy); border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 12px; text-transform: uppercase; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .kpi-box { padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #cbd5e1; }
+    .kpi-val { font-size: 26px; font-weight: 800; margin-top: 4px; }
+    .kpi-total { background: #eff6ff; color: #1d4ed8; }
+    .kpi-allow { background: #f0fdf4; color: var(--green); }
+    .kpi-chal { background: #fffbeb; color: var(--amber); }
+    .kpi-esc { background: #fef2f2; color: var(--red); }
+    .tc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+    .btn { cursor: pointer; border: none; border-radius: 6px; padding: 9px 12px; font-size: 12.5px; font-weight: 600; transition: 0.15s; }
+    .btn-tc { background: #e8effa; color: var(--navy); border: 1px solid #b6c8e8; text-align: left; }
+    .btn-tc:hover { background: #d0dff6; }
+    .btn-primary { background: var(--navy); color: #fff; width: 100%; padding: 10px; font-size: 13.5px; }
+    .btn-primary:hover { background: #2b4c85; }
+    .btn-oob { background: #c55a11; color: #fff; }
+    .detail-grid { display: grid; grid-template-columns: 240px 1fr; gap: 14px; align-items: stretch; }
+    .score-panel { border-radius: 8px; padding: 14px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+    .score-num { font-size: 34px; font-weight: 800; margin: 6px 0; }
+    .transcript-box { background: #fffdf5; border: 1px solid #fde68a; border-radius: 8px; padding: 12px; font-size: 14px; line-height: 1.55; }
+    mark.kw-alert { background: #fee2e2; color: #b91c1c; font-weight: 700; padding: 1px 5px; border-radius: 4px; border: 1px solid #f87171; }
+    .plot-img { width: 100%; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 12px; background: #fff; }
+    .oob-phone { background: #1e293b; color: #f8fafc; border-radius: 12px; padding: 14px; margin-top: 10px; border: 2px solid #475569; }
+    .otp-digits { font-size: 26px; letter-spacing: 6px; font-weight: 800; color: #38bdf8; text-align: center; margin: 8px 0; background: #0f172a; padding: 8px; border-radius: 6px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 8px; }
+    th { background: var(--navy); color: #fff; padding: 8px; text-align: left; }
+    td { padding: 7px 8px; border-bottom: 1px solid #e2e8f0; }
+    .pill { padding: 3px 8px; border-radius: 99px; font-weight: 700; font-size: 11px; text-transform: uppercase; display: inline-block; }
+    .pill-allow { background: #dcfce7; color: #166534; }
+    .pill-challenge { background: #fef3c7; color: #92400e; }
+    .pill-escalate { background: #fee2e2; color: #991b1b; }
+    input[type="text"], input[type="file"] { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 8px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🛡️ PROJECT 9: DEEPFAKE VISHING DEFENSE SYSTEM – SOC VISUALIZATION DASHBOARD</h1>
+    <span class="badge-online">● Multi-Channel Defense Active (Librosa MFCC + PyOTP OOB)</span>
+  </header>
+
+  <div class="container">
+    <!-- LEFT COLUMN: SCREEN 1 (KPIs), SCREEN 2 (Call Details + Spectrogram), History Table -->
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <!-- MÀN HÌNH 1: TỔNG QUAN -->
+      <div class="card">
+        <div class="card-title">Màn hình 1: Tổng quan Thống kê Cuộc gọi (SOC Overview)</div>
+        <div class="kpi-grid">
+          <div class="kpi-box kpi-total"><div>Tổng cuộc gọi</div><div class="kpi-val" id="kpiTotal">0</div></div>
+          <div class="kpi-box kpi-allow"><div>An toàn (ALLOW)</div><div class="kpi-val" id="kpiAllow">0</div></div>
+          <div class="kpi-box kpi-chal"><div>Thử thách OOB</div><div class="kpi-val" id="kpiChal">0</div></div>
+          <div class="kpi-box kpi-esc"><div>Báo động (ESCALATE)</div><div class="kpi-val" id="kpiEsc">0</div></div>
+        </div>
+      </div>
+
+      <!-- MÀN HÌNH 2: CHI TIẾT CUỘC GỌI & PHỔ ÂM THANH -->
+      <div class="card">
+        <div class="card-title">Màn hình 2: Phân tích Chi tiết Cuộc gọi, Từ khóa Nhạy cảm & Phổ Âm thanh (Librosa MFCC)</div>
+        <div class="detail-grid">
+          <div class="score-panel" id="scorePanel" style="background:#f8fafc; border:1px solid #cbd5e1;">
+            <div style="font-size:12px; font-weight:700;">ĐIỂM GIẢ MẠO (FAKE SCORE)</div>
+            <div class="score-num" id="detailFakeScore">--</div>
+            <div id="detailLabel" style="font-weight:700; font-size:13px;">Chưa có cuộc gọi</div>
+            <div style="margin-top:8px;" id="detailDecisionBadge"></div>
+          </div>
+          <div>
+            <div class="transcript-box">
+              <div style="font-size:12px; font-weight:700; color:#92400e; margin-bottom:4px;">
+                📝 Nội dung Cuộc gọi (Speech-to-Text & Sensitive Keyword Highlight):
+              </div>
+              <div id="detailTranscript">Hãy bấm chọn 1 kịch bản bên phải (TC1 → TC7) hoặc upload file .wav để phân tích...</div>
+              <div style="margin-top:8px; font-size:12px; color:#475569;" id="detailFeatures"></div>
+            </div>
+          </div>
+        </div>
+        <img id="detailPlot" class="plot-img" style="display:none;" alt="Waveform and Mel-Spectrogram" />
+      </div>
+
+      <!-- BẢNG LỊCH SỬ SỰ KIỆN -->
+      <div class="card">
+        <div class="card-title">Nhật ký Kiểm toán Sự kiện Cuộc gọi (SQLite Audit Log)</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Thời gian</th>
+              <th>Mã cuộc gọi</th>
+              <th>Fake Score</th>
+              <th>Ý định Nhạy cảm</th>
+              <th>Trạng thái OOB</th>
+              <th>Quyết định</th>
+            </tr>
+          </thead>
+          <tbody id="eventsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: SCREEN 4 (Demo Simulator) & SCREEN 3 (OOB Verification + Boss Phone) -->
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <!-- MÀN HÌNH 4: TRÌNH MÔ PHỎNG DEMO -->
+      <div class="card">
+        <div class="card-title">Màn hình 4: Trình Mô phỏng 7 Kịch bản Kiểm thử (TC1 → TC7)</div>
+        <p style="font-size:12px; color:#475569; margin-bottom:8px;">Bấm nhanh từng kịch bản trong sheet <b>Test Cases</b> để chạy thử và chụp màn hình báo cáo:</p>
+        <div class="tc-grid">
+          <button class="btn btn-tc" onclick="runTC('TC1')"><b>TC1:</b> Giọng thật + Thường</button>
+          <button class="btn btn-tc" onclick="runTC('TC2')"><b>TC2:</b> Giọng giả + Chuyển khoản</button>
+          <button class="btn btn-tc" onclick="runTC('TC3')"><b>TC3:</b> Giọng thật + CK (OTP Đúng)</button>
+          <button class="btn btn-tc" onclick="runTC('TC4')"><b>TC4:</b> Giọng thật + CK (OTP Sai)</button>
+          <button class="btn btn-tc" onclick="runTC('TC5')"><b>TC5:</b> Mã OTP Hết hạn (>60s)</button>
+          <button class="btn btn-tc" onclick="runTC('TC6')"><b>TC6:</b> Brute-force OTP (Sai 3 lần)</button>
+          <button class="btn btn-tc" style="grid-column: span 2;" onclick="runTC('TC7')"><b>TC7:</b> Giọng giả AI + Yêu cầu thường (Bắt ngay bởi MFCC Detector)</button>
+        </div>
+
+        <hr style="margin: 12px 0; border: none; border-top: 1px solid #e2e8f0;" />
+        <div style="font-size:12.5px; font-weight:700; margin-bottom:6px;">Hoặc Upload File Audio (.wav) Tùy chỉnh:</div>
+        <input type="file" id="customAudio" accept=".wav,.mp3" />
+        <input type="text" id="customTranscript" placeholder="Nhập câu thoại (hoặc để trống cho STT tự dịch)..." />
+        <button class="btn btn-primary" onclick="uploadCustomCall()">▶ Phân tích Cuộc gọi (/call-event)</button>
+      </div>
+
+      <!-- MÀN HÌNH 3: TRẠNG THÁI XÁC THỰC OUT-OF-BAND (PYOTP) -->
+      <div class="card">
+        <div class="card-title">Màn hình 3: Kênh Xác thực Ngoài Băng Tần (Out-of-Band PyOTP MFA)</div>
+        <div id="oobStatusBox" style="padding:10px; border-radius:8px; background:#f8fafc; border:1px solid #cbd5e1; font-size:13px; margin-bottom:10px;">
+          <b>Challenge ID:</b> <span id="oobChallengeId">Không có</span><br/>
+          <b>Trạng thái OOB:</b> <span id="oobStatusText">Chưa kích hoạt</span>
+        </div>
+
+        <input type="text" id="otpInput" placeholder="Nhập mã TOTP 6 chữ số để xác minh..." />
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-oob" style="flex:1;" onclick="verifyManualOTP(false)">✔ Xác minh OTP (/otp/verify)</button>
+          <button class="btn" style="background:#64748b; color:#fff;" onclick="verifyManualOTP(true)">⏳ Giả lập Hết hạn</button>
+        </div>
+
+        <!-- THIẾT BỊ NGƯỜI THẬT GIẢ LẬP (TASK B03) -->
+        <div class="oob-phone">
+          <div style="font-size:12px; font-weight:700; color:#94a3b8; text-align:center;">
+            📱 THIẾT BỊ NGƯỜI THẬT GIẢ LẬP (PYOTP AUTHENTICATOR - TASK B03)
+          </div>
+          <div class="otp-digits" id="bossPhoneOtp">------</div>
+          <div style="font-size:11.5px; text-align:center; color:#cbd5e1;" id="bossPhoneHint">
+            Khi có yêu cầu chuyển khoản nhạy cảm, mã TOTP 6 số sẽ xuất hiện tại đây (Chỉ người thật mới có thiết bị này).
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentChallengeId = "";
+
+    function pillHtml(decision) {
+      const d = (decision || "").toLowerCase();
+      if (d === "allow") return '<span class="pill pill-allow">✔ ALLOW (CHO PHÉP)</span>';
+      if (d === "challenge") return '<span class="pill pill-challenge">🔐 CHALLENGE (CHỜ OOB)</span>';
+      return '<span class="pill pill-escalate">🚨 ESCALATE (BÁO ĐỘNG ĐỎ)</span>';
+    }
+
+    function updateDetailView(ev) {
+      document.getElementById("detailFakeScore").innerText = (ev.fake_score * 100).toFixed(1) + "%";
+      document.getElementById("detailLabel").innerText = ev.label === "SPOOF" ? "🤖 GIỌNG GIẢ AI (SPOOF)" : "🎙️ GIỌNG THẬT (BONAFIDE)";
+      document.getElementById("detailDecisionBadge").innerHTML = pillHtml(ev.decision);
+
+      const panel = document.getElementById("scorePanel");
+      if (ev.decision === "allow") { panel.style.background = "#f0fdf4"; panel.style.borderColor = "#86efac"; }
+      else if (ev.decision === "challenge") { panel.style.background = "#fffbeb"; panel.style.borderColor = "#fde047"; }
+      else { panel.style.background = "#fef2f2"; panel.style.borderColor = "#fca5a5"; }
+
+      document.getElementById("detailTranscript").innerHTML = ev.highlighted_transcript || ev.transcript;
+      const f = ev.features_summary || {};
+      document.getElementById("detailFeatures").innerText =
+        `Đặc trưng Librosa: Spectral Centroid = ${f.spectral_centroid_hz || '--'} Hz | Rolloff = ${f.spectral_rolloff_hz || '--'} Hz | ZCR = ${f.zero_crossing_rate || '--'} | Risk Score = ${ev.risk_score}`;
+
+      if (ev.plot_url) {
+        const img = document.getElementById("detailPlot");
+        img.src = ev.plot_url + "?t=" + new Date().getTime();
+        img.style.display = "block";
+      }
+
+      currentChallengeId = ev.challenge_id || "";
+      document.getElementById("oobChallengeId").innerText = currentChallengeId || "Không cần OOB";
+      document.getElementById("oobStatusText").innerText = ev.oob_status || "NONE";
+      if (ev.expected_otp_demo) {
+        document.getElementById("bossPhoneOtp").innerText = ev.expected_otp_demo;
+        document.getElementById("otpInput").value = ev.expected_otp_demo;
+      } else {
+        document.getElementById("bossPhoneOtp").innerText = "------";
+      }
+    }
+
+    async function refreshEvents() {
+      const res = await fetch("/events");
+      const events = await res.json();
+      document.getElementById("kpiTotal").innerText = events.length;
+      document.getElementById("kpiAllow").innerText = events.filter(e => e.decision === "allow").length;
+      document.getElementById("kpiChal").innerText = events.filter(e => e.decision === "challenge").length;
+      document.getElementById("kpiEsc").innerText = events.filter(e => e.decision === "escalate").length;
+
+      const tbody = document.getElementById("eventsTableBody");
+      tbody.innerHTML = events.map(e => `
+        <tr style="cursor:pointer;" onclick='updateDetailView(${JSON.stringify(e).replace(/'/g, "&#39;")})'>
+          <td>${e.timestamp}</td>
+          <td><b>${e.call_id}</b></td>
+          <td>${(e.fake_score * 100).toFixed(1)}% (${e.label})</td>
+          <td>${e.sensitive ? '<b style="color:#c62828;">CÓ (' + e.keywords.length + ' từ khóa)</b>' : 'Không'}</td>
+          <td><b>${e.oob_status}</b></td>
+          <td>${pillHtml(e.decision)}</td>
+        </tr>
+      `).join("");
+    }
+
+    async function runTC(tcId) {
+      const fd = new FormData();
+      fd.append("tc_id", tcId);
+      const res = await fetch("/demo/run-tc", { method: "POST", body: fd });
+      const data = await res.json();
+      updateDetailView(data);
+      await refreshEvents();
+    }
+
+    async function uploadCustomCall() {
+      const fileInput = document.getElementById("customAudio");
+      if (!fileInput.files.length) {
+        alert("Vui lòng chọn 1 file âm thanh (.wav) hoặc bấm các nút TC1 -> TC7 ở trên!");
+        return;
+      }
+      const fd = new FormData();
+      fd.append("audio", fileInput.files[0]);
+      fd.append("transcript_hint", document.getElementById("customTranscript").value);
+      const res = await fetch("/call-event", { method: "POST", body: fd });
+      const data = await res.json();
+      updateDetailView(data);
+      await refreshEvents();
+    }
+
+    async function verifyManualOTP(forceExpire) {
+      if (!currentChallengeId) {
+        alert("Cuộc gọi hiện tại chưa có Challenge ID đang chờ!");
+        return;
+      }
+      const fd = new FormData();
+      fd.append("challenge_id", currentChallengeId);
+      fd.append("code", document.getElementById("otpInput").value);
+      fd.append("force_expire", forceExpire);
+      const res = await fetch("/otp/verify", { method: "POST", body: fd });
+      const v = await res.json();
+      document.getElementById("oobStatusText").innerText = `${v.status} (${v.reason})`;
+      document.getElementById("detailDecisionBadge").innerHTML = pillHtml(v.decision);
+      await refreshEvents();
+    }
+
+    refreshEvents();
+  </script>
+</body>
+</html>

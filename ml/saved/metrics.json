@@ -1,0 +1,21 @@
+{
+  "best_model": "Random Forest",
+  "models": {
+    "SVM (RBF Kernel)": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "eer": 0.0,
+      "optimal_threshold": 0.9442
+    },
+    "Random Forest": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "eer": 0.0,
+      "optimal_threshold": 0.9667
+    }
+  }
+}
